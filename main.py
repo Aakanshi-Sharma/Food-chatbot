@@ -14,6 +14,7 @@ async def handle_request(request: Request):
         parameters = payload['queryResult']['parameters']
         outputs = payload['queryResult']['outputContexts']
         if intent == 'track.order - context: ongoing-tracking':
+            track_order(parameters)
             return JSONResponse(content={
                 "fulfillmentText": f"Received =={intent}== in the backend"
             })
@@ -21,3 +22,7 @@ async def handle_request(request: Request):
             return JSONResponse(content={"fulfillmentText": "Intent not recognized"})
     except json.JSONDecodeError as e:
         raise HTTPException(status_code=400, detail="Invalid JSON data")
+
+def track_order(parameters:dict):
+    order_id=parameters['number']
+    

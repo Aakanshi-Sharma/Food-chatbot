@@ -4,7 +4,7 @@ global conn
 conn = mysql.connector.connect(
     host='localhost',
     username="root",
-    password="root",
+    password="Aa@200803",
     database="pandeyji_eatery"
 )
 
@@ -16,7 +16,6 @@ def get_order_status(order_id: int):
     result = cur.fetchone()
 
     cur.close()
-    conn.close()
 
     if result is not None:
         return result[0]

@@ -6,6 +6,7 @@ import db_connector
 import json
 
 app = FastAPI()
+inprogress_order = {}
 
 
 @app.post("/")
@@ -28,9 +29,22 @@ async def handle_request(request: Request):
 def add_to_order(parameters: dict, session_id: str):
     food_items = parameters['food-item']
     quantities = parameters['number']
+
     if len(food_items) != len(quantities):
         fulfillment_text = "Sorry, I can't understand. Please specify the food items and their quantities."
     else:
+        food_dict = dict(zip(food_items, quantities))
+        if session_id in inprogress_order.keys():
+            current_dict = inprogress_order[session_id]
+            for j in food_dict:
+                if food_dict[j] not in current_dict:
+                    current_dict.update(dict((j, food_dict[j])))
+                else:
+                    current_dict[j] += food_dict[j]
+        else:
+            inprogress_order[session_id] = food_dict
+        order_str=helpers.get_str_from_food_dict(inprogress_order[session_id])
+
         fulfillment_text = f"Received {food_items} and {quantities} in the backend."
     return JSONResponse(content={
         "fulfillmentText": fulfillment_text

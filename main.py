@@ -19,7 +19,8 @@ async def handle_request(request: Request):
         session_id = helpers.extract_session_id(output_contexts[0]['name'])
         intent_handle = {
             'track.order - context: ongoing-tracking': track_order,
-            'order.add - context: ongoing-order': add_to_order
+            'order.add - context: ongoing-order': add_to_order,
+            'order.complete - context: ongoing-order': complete_order
         }
         return intent_handle[intent](parameters, session_id)
     except json.JSONDecodeError as e:
@@ -37,18 +38,37 @@ def add_to_order(parameters: dict, session_id: str):
         if session_id in inprogress_order.keys():
             current_dict = inprogress_order[session_id]
             for j in food_dict:
-                if food_dict[j] not in current_dict:
-                    current_dict.update(dict((j, food_dict[j])))
+                if j not in current_dict:
+                    current_dict[j] = food_dict[j]
                 else:
                     current_dict[j] += food_dict[j]
         else:
             inprogress_order[session_id] = food_dict
-        order_str=helpers.get_str_from_food_dict(inprogress_order[session_id])
+        order_str = helpers.get_str_from_food_dict(inprogress_order[session_id])
 
-        fulfillment_text = f"Received {food_items} and {quantities} in the backend."
+        fulfillment_text = f"So far you have {order_str}. Do you want anything else?"
     return JSONResponse(content={
         "fulfillmentText": fulfillment_text
     })
+
+
+def save_to_db(orders: dict):
+    next_order_id = db_connector.get_next_order_id()
+    for food_item, quantity in orders.items():
+        rcode = db_connector.insert_into_db(food_item, quantity, next_order_id)
+        if rcode == -1:
+            return -1
+    return next_order_id
+
+
+def complete_order(parameters: dict, session_id):
+    if session_id not in inprogress_order:
+        fulfillment_text = "There is a trouble in tracking your order. Please order again."
+    else:
+        orders = inprogress_order[session_id]
+        order_id = save_to_db(orders)
+        if order_id == -1:
+            fulfillment_text = "Sorry, error in saving in our database."
 
 
 def track_order(parameters: dict, session_id: str):

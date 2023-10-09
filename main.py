@@ -58,6 +58,7 @@ def save_to_db(orders: dict):
         rcode = db_connector.insert_into_db(food_item, quantity, next_order_id)
         if rcode == -1:
             return -1
+    db_connector.insert_order_tracking(next_order_id, "In progress")
     return next_order_id
 
 
@@ -74,6 +75,7 @@ def complete_order(parameters: dict, session_id):
             fulfillment_text=f"""Successfully placed the order.
                                 Here is the order id {order_id}.
                                 Total amount of the order is {total_price} which you can pay after the delivery."""
+        del inprogress_order[session_id]
     return JSONResponse(content={
         "fulfillmentText":fulfillment_text
     })

@@ -63,6 +63,7 @@ def save_to_db(orders: dict):
 
 
 def complete_order(parameters: dict, session_id):
+
     if session_id not in inprogress_order:
         fulfillment_text = "There is a trouble in tracking your order. Please order again."
     else:
@@ -74,7 +75,7 @@ def complete_order(parameters: dict, session_id):
             total_price=db_connector.get_total_price(order_id)
             fulfillment_text=f"""Successfully placed the order.
                                 Here is the order id {order_id}.
-                                Total amount of the order is {total_price} which you can pay after the delivery."""
+                                Total amount of the order is {total_price} rupees which you can pay after the delivery."""
         del inprogress_order[session_id]
     return JSONResponse(content={
         "fulfillmentText":fulfillment_text

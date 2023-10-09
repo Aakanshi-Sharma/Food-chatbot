@@ -20,7 +20,8 @@ async def handle_request(request: Request):
         intent_handle = {
             'track.order - context: ongoing-tracking': track_order,
             'order.add - context: ongoing-order': add_to_order,
-            'order.complete - context: ongoing-order': complete_order
+            'order.complete - context: ongoing-order': complete_order,
+            'order.remove - context: ongoing-context': remove_item
         }
         return intent_handle[intent](parameters, session_id)
     except json.JSONDecodeError as e:
@@ -52,6 +53,15 @@ def add_to_order(parameters: dict, session_id: str):
     })
 
 
+def remove_item(parameters: dict, session_id: str):
+    food_dict = inprogress_order[session_id]
+    for i in parameters:
+        if i not in food_dict.keys():
+            fulfillment_text = f'Item not found in the order history.'
+        else:
+            food_dict[i] -= parameters[i]
+
+
 def save_to_db(orders: dict):
     next_order_id = db_connector.get_next_order_id()
     for food_item, quantity in orders.items():
@@ -63,7 +73,7 @@ def save_to_db(orders: dict):
 
 
 def complete_order(parameters: dict, session_id):
-
+    print(inprogress_order[session_id])
     if session_id not in inprogress_order:
         fulfillment_text = "There is a trouble in tracking your order. Please order again."
     else:
@@ -72,13 +82,13 @@ def complete_order(parameters: dict, session_id):
         if order_id == -1:
             fulfillment_text = "Sorry, error in saving in our database."
         else:
-            total_price=db_connector.get_total_price(order_id)
-            fulfillment_text=f"""Successfully placed the order.
+            total_price = db_connector.get_total_price(order_id)
+            fulfillment_text = f"""Successfully placed the order.
                                 Here is the order id {order_id}.
                                 Total amount of the order is {total_price} rupees which you can pay after the delivery."""
         del inprogress_order[session_id]
     return JSONResponse(content={
-        "fulfillmentText":fulfillment_text
+        "fulfillmentText": fulfillment_text
     })
 
 

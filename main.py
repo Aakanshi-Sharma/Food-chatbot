@@ -69,6 +69,14 @@ def complete_order(parameters: dict, session_id):
         order_id = save_to_db(orders)
         if order_id == -1:
             fulfillment_text = "Sorry, error in saving in our database."
+        else:
+            total_price=db_connector.get_total_price(order_id)
+            fulfillment_text=f"""Successfully placed the order.
+                                Here is the order id {order_id}.
+                                Total amount of the order is {total_price} which you can pay after the delivery."""
+    return JSONResponse(content={
+        "fulfillmentText":fulfillment_text
+    })
 
 
 def track_order(parameters: dict, session_id: str):

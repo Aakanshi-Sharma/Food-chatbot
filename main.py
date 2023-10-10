@@ -46,7 +46,6 @@ def add_to_order(parameters: dict, session_id: str):
         else:
             inprogress_order[session_id] = food_dict
         order_str = helpers.get_str_from_food_dict(inprogress_order[session_id])
-
         fulfillment_text = f"So far you have {order_str}. Do you want anything else?"
     return JSONResponse(content={
         "fulfillmentText": fulfillment_text
@@ -54,12 +53,43 @@ def add_to_order(parameters: dict, session_id: str):
 
 
 def remove_item(parameters: dict, session_id: str):
-    food_dict = inprogress_order[session_id]
-    for i in parameters:
-        if i not in food_dict.keys():
-            fulfillment_text = f'Item not found in the order history.'
+    if session_id not in inprogress_order:
+        return JSONResponse(content={
+            "fulfillmentText": "Your order is not found. Please order again!"
+        })
+    current_dict = inprogress_order[session_id]
+    delete_food = parameters['food-item']
+    delete_quantity = parameters['number']
+    if len(delete_food) != len(delete_quantity):
+        fulfillment_text = "Sorry, I can't understand. Please specify the food items and their quantities."
+        return JSONResponse(content={
+            "fulfillmentText": fulfillment_text
+        })
+    else:
+        deleted_food_dict = dict(zip(
+            delete_food, delete_quantity
+        ))
+        no_such_item = []
+        for i in deleted_food_dict:
+            if i not in current_dict:
+                no_such_item.append(i)
+            else:
+                current_dict[i] -= deleted_food_dict[i]
+                if current_dict[i] <= 0:
+                    del current_dict[i]
+        inprogress_order[session_id] = current_dict
+        if (len(current_dict.keys())) == 0:
+            fulfillment_text = "Your order is empty now!."
         else:
-            food_dict[i] -= parameters[i]
+            order_str = helpers.get_str_from_food_dict(inprogress_order[session_id])
+            no_such_item_str = ''
+            if len(no_such_item) > 0:
+                no_such_item_str = ', '.join(no_such_item) + ' are not found in your order history.'
+
+            fulfillment_text = f'So, your final order is {order_str}.' + no_such_item_str + 'Do you want any changes in it?'
+        return JSONResponse(content={
+            "fulfillmentText": fulfillment_text
+        })
 
 
 def save_to_db(orders: dict):

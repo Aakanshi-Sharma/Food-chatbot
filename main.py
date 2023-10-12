@@ -21,11 +21,18 @@ async def handle_request(request: Request):
             'track.order - context: ongoing-tracking': track_order,
             'order.add - context: ongoing-order': add_to_order,
             'order.complete - context: ongoing-order': complete_order,
-            'order.remove - context: ongoing-context': remove_item
+            'order.remove - context: ongoing-context': remove_item,
+            'new.order': new_order,
         }
         return intent_handle[intent](parameters, session_id)
     except json.JSONDecodeError as e:
         raise HTTPException(status_code=400, detail="Invalid JSON data")
+
+
+def new_order(parameters:dict, session_id:str):
+    if session_id in inprogress_order:
+        print(inprogress_order[session_id])
+        del inprogress_order[session_id]
 
 
 def add_to_order(parameters: dict, session_id: str):

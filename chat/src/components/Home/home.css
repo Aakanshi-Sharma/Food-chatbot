@@ -1,0 +1,12 @@
+.outerdiv {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+
+  background-image: url("../../food-bot-image.jpg");
+  background-size: cover;
+}
+.innerdiv {
+  border-radius: 8px;
+}
